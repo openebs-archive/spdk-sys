@@ -18,9 +18,13 @@ Rust bindings for SPDK.
     ```bash
     ./build.sh
     ```
+5.  Install spdk header files (libs are installed too but those are not needed):
+    ```bash
+    cd spdk && make install
+    ```
 5.  Copy the library to a place where it can be found by the linker:
     ```bash
-    sudo cp build/libspdk_fat.so /usr/lib/
+    sudo cp build/libspdk_fat.so /usr/local/lib/
     ```
 6.  Put spdk-sys crate to dependencies in Cargo.toml of your project and start using it.
 

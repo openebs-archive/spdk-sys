@@ -8,7 +8,7 @@ use std::{
     collections::HashSet,
     env,
     fs::File,
-    io::{self, Write, Error, ErrorKind, Result},
+    io::{self, Error, ErrorKind, Result, Write},
     path::PathBuf,
     sync::{Arc, RwLock},
 };
@@ -55,8 +55,8 @@ fn find_spdk_lib(out_path: &PathBuf) -> Result<()> {
     if !output.status.success() {
         io::stderr().write_all(&output.stderr).unwrap();
         Err(Error::new(
-                ErrorKind::Other,
-                "spdk_fat library not found
+            ErrorKind::Other,
+            "spdk_fat library not found
     Hint: Likely you need to install it to the system at first.
           Look at build.sh script in spdk-sys repo.",
         ))
@@ -70,10 +70,12 @@ fn find_spdk_lib(out_path: &PathBuf) -> Result<()> {
 fn create_wrapper_h(out_path: &PathBuf) -> Result<String> {
     let mut headers: Vec<String> = glob("spdk/include/spdk/*.h")
         .expect("wrong glob pattern")
-        .map(|e| format!(
+        .map(|e| {
+            format!(
                 "#include <spdk/{}>",
                 e.unwrap().file_name().unwrap().to_str().unwrap()
-        ))
+            )
+        })
         .collect();
 
     // Private headers which should not be normally used but we need them
@@ -105,12 +107,16 @@ fn main() {
 
     let wrapper_h = match create_wrapper_h(&out_path) {
         Ok(val) => val,
-        Err(err) => panic!("Failed to create wrapper file with headers: {}", err),
+        Err(err) => {
+            panic!("Failed to create wrapper file with headers: {}", err)
+        }
     };
 
     let macros = Arc::new(RwLock::new(HashSet::new()));
     let bindings = bindgen::Builder::default()
         .header(wrapper_h)
+        // If we did not use private interfaces those would not be needed.
+        // All needed headers should be in /usr/local/include.
         .clang_arg("-Ispdk/include")
         .clang_arg("-Ispdk/lib")
         .rustfmt_bindings(true)
