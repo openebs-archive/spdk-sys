@@ -68,13 +68,20 @@ fn find_spdk_lib(out_path: &PathBuf) -> Result<()> {
 /// Create a wrapper.h file containing includes for all public spdk header
 /// files, which can be used as input for bindgen.
 fn create_wrapper_h(out_path: &PathBuf) -> Result<String> {
-    let headers: Vec<String> = glob("spdk/include/spdk/*.h")
+    let mut headers: Vec<String> = glob("spdk/include/spdk/*.h")
         .expect("wrong glob pattern")
         .map(|e| format!(
                 "#include <spdk/{}>",
                 e.unwrap().file_name().unwrap().to_str().unwrap()
         ))
         .collect();
+
+    // Private headers which should not be normally used but we need them
+    headers.push("#include <spdk_internal/lvolstore.h>".to_owned());
+    headers.push("#include <bdev/nvme/bdev_nvme.h>".to_owned());
+    headers.push("#include <bdev/malloc/bdev_malloc.h>".to_owned());
+    headers.push("#include <bdev/aio/bdev_aio.h>".to_owned());
+    headers.push("#include <bdev/lvol/vbdev_lvol.h>".to_owned());
 
     let h_file = out_path.join("wrapper.h");
     let mut file = File::create(&h_file)?;
@@ -105,6 +112,7 @@ fn main() {
     let bindings = bindgen::Builder::default()
         .header(wrapper_h)
         .clang_arg("-Ispdk/include")
+        .clang_arg("-Ispdk/lib")
         .rustfmt_bindings(true)
         .trust_clang_mangling(false)
         .layout_tests(false)
