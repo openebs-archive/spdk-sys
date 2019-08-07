@@ -16,11 +16,6 @@ cd $BASEDIR
 # checkout spdk sources
 [ -d spdk/.git ] || git submodule update --init --recursive
 
-# We need to disable some CPU specific optimization flags because we cannot
-# know which flavour of x86-64 cpu the binary will run on.
-# corei7 with certain cpu flags disabled seems to be a reasonable compromise.
-cp defconfig_x86_64-nhm-linuxapp-gcc spdk/dpdk/config/defconfig_x86_64-nhm-linuxapp-gcc
-
 # *should* not be needed to specify the -nmno-xxx however for certain
 # it does. There are some existing bugs out there where either
 # or gcc do not fully do the right thing, general consensus is that
@@ -56,8 +51,7 @@ cp defconfig_x86_64-nhm-linuxapp-gcc spdk/dpdk/config/defconfig_x86_64-nhm-linux
 DISABLED_FLAGS="-mno-movbe -mno-lzcnt -mno-bmi -mno-bmi2"
 
 cd spdk
-CFLAGS=$DISABLED_FLAGS DPDK_EXTRA_FLAGS=$DISABLED_FLAGS ./configure \
-    --with-dpdk-machine=nhm \
+CFLAGS=$DISABLED_FLAGS DPDK_EXTRA_FLAGS="-march=corei7 $DISABLED_FLAGS" ./configure \
     --with-iscsi-initiator \
     --with-rdma \
     --with-internal-vhost-lib \
