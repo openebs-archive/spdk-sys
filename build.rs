@@ -8,7 +8,7 @@ use std::{
     collections::HashSet,
     env,
     fs::File,
-    io::{self, Write, Error, ErrorKind, Result},
+    io::{self, Error, ErrorKind, Result, Write},
     path::PathBuf,
     sync::{Arc, RwLock},
 };
@@ -55,8 +55,8 @@ fn find_spdk_lib(out_path: &PathBuf) -> Result<()> {
     if !output.status.success() {
         io::stderr().write_all(&output.stderr).unwrap();
         Err(Error::new(
-                ErrorKind::Other,
-                "spdk_fat library not found
+            ErrorKind::Other,
+            "spdk_fat library not found
     Hint: Likely you need to install it to the system at first.
           Look at build.sh script in spdk-sys repo.",
         ))
@@ -68,12 +68,18 @@ fn find_spdk_lib(out_path: &PathBuf) -> Result<()> {
 /// Create a wrapper.h file containing includes for all public spdk header
 /// files, which can be used as input for bindgen.
 fn create_wrapper_h(out_path: &PathBuf) -> Result<String> {
+    // XXX just now we rely that headers in spdk submodule and headers
+    // installed on the system are the same. We could look directly to
+    // /usr/local/include/spdk but without pkg-config we don't know what
+    // was the installation prefix.
     let headers: Vec<String> = glob("spdk/include/spdk/*.h")
         .expect("wrong glob pattern")
-        .map(|e| format!(
+        .map(|e| {
+            format!(
                 "#include <spdk/{}>",
                 e.unwrap().file_name().unwrap().to_str().unwrap()
-        ))
+            )
+        })
         .collect();
 
     let h_file = out_path.join("wrapper.h");
@@ -104,7 +110,6 @@ fn main() {
     let macros = Arc::new(RwLock::new(HashSet::new()));
     let bindings = bindgen::Builder::default()
         .header(wrapper_h)
-        .clang_arg("-Ispdk/include")
         .rustfmt_bindings(true)
         .trust_clang_mangling(false)
         .layout_tests(false)
