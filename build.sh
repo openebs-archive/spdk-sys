@@ -61,7 +61,8 @@ CFLAGS=$DISABLED_FLAGS DPDK_EXTRA_FLAGS=$DISABLED_FLAGS ./configure \
     --with-iscsi-initiator \
     --with-rdma \
     --with-internal-vhost-lib \
-    --disable-tests
+    --disable-tests \
+    "$@"
 TARGET_ARCHITECTURE=corei7 make -j $(nproc)
 cd ..
 
@@ -89,7 +90,9 @@ for a in $ARCHIVES; do
 done
 
 [ -d build ] || mkdir build
-ld -shared -o build/libspdk_fat.so --whole-archive $ARCHIVES --no-whole-archive
+cc -shared -o build/libspdk_fat.so \
+	-lc -lrdmacm -laio -libverbs -liscsi -lnuma -ldl -lrt -luuid -lcrypto \
+	-Wl,--whole-archive $ARCHIVES -Wl,--no-whole-archive
 
 echo
 echo "Don't forget to install build/libspdk_fat.so to dir where it can be found by linker"
