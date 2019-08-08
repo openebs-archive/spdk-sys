@@ -134,6 +134,7 @@ fn main() {
     // OS libs
     // depending on distro/version -- this search path might be needed
     println!("cargo:rustc-link-search=native=/usr/lib64/iscsi");
+    // if you add a library here then also add it in build.sh
     println!("cargo:rustc-link-lib=ibverbs");
     println!("cargo:rustc-link-lib=rdmacm");
     println!("cargo:rustc-link-lib=aio");
