@@ -1,0 +1,2 @@
+A simple test utility for spdk-sys crate. Just build it and run it. It calls
+parsing routine for command line arguments from SPDK lib and exits.

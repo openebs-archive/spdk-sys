@@ -1,0 +1,10 @@
+[package]
+name = "spdk-sys-test"
+description = "Test of the rust bindings for SPDK library"
+version = "0.1.0"
+edition = "2018"
+license = "MIT"
+authors = ["Jan Kryl <jan.kryl@mayadata.io>"]
+
+[dependencies]
+spdk-sys = { path = ".." }
