@@ -84,6 +84,7 @@ fn create_wrapper_h(out_path: &PathBuf) -> Result<String> {
     headers.push("#include <bdev/malloc/bdev_malloc.h>".to_owned());
     headers.push("#include <bdev/aio/bdev_aio.h>".to_owned());
     headers.push("#include <bdev/lvol/vbdev_lvol.h>".to_owned());
+    headers.push("#include <bdev/iscsi/bdev_iscsi.h>".to_owned());
 
     let h_file = out_path.join("wrapper.h");
     let mut file = File::create(&h_file)?;
