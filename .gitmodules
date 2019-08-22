@@ -1,3 +1,4 @@
 [submodule "spdk"]
 	path = spdk
-	url = https://github.com/mayadata-io/spdk.git
+	url = https://github.com/openebs/spdk.git
+	branch = 19.07.x-mayastor
