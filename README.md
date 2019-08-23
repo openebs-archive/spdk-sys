@@ -1,22 +1,22 @@
-Rust bindings for SPDK.
+Rust bindings for spdk.
 
 # Quick start
 
-1.  Checkout SPDK sources
+1.  Checkout spdk sources
     ```bash
     git submodule update --init --recursive
     ```
-2.  Install SPDK dependencies:
+2.  Install spdk dependencies:
     ```bash
     sudo spdk/scripts/pkgdep.sh
     ```
-3.  `nasm` is optional dependency so it must be installed explicitly (for ubuntu):
+3.  `nasm` is an optional dependency which must be installed if you want to make use of crypto and ISA-L:
     ```bash
     sudo apt-get install nasm
     ```
-4.  Build monolithic SPDK library:
+4.  Build monolithic spdk library:
     ```bash
-    ./build.sh
+    ./build.sh --with-isal --with-crypto
     ```
 5.  Install spdk header files (libs are installed too but those are not needed):
     ```bash
@@ -30,12 +30,13 @@ Rust bindings for SPDK.
 
 # build.sh
 
-build.sh is a helper script for building SPDK fat library. It is quite
-rough and may not fit all use cases. Configuring & building SPDK without
+`build.sh` is a helper script for building spdk fat library. It is quite
+rough and may not fit all use cases. Configuring & building spdk without
 using it is perfectly fine. The script just shows a possible way how to
 do that. The only thing which matters is that at the end of build process
 there must be a library named `libspdk_fat.so` somewhere in standard
-library path.
+library path. We will continue to evaluate this process and try to make
+the spdk-sys crate as easy as possible to use.
 
 # Design
 
@@ -45,8 +46,8 @@ Creating a crate with bindings for spdk lib is challenging:
 
 
 1. The public interface of spdk lib contains countless number of function, constant and structure definitions. That makes creating the bindings by hand unfeasible. rust’s bindgen must be used. The result is a huge file with all public member definitions in rust with tens thousands of lines, which makes the compilation slower. In fact we don’t generate bindings for all spdk header files, but just some and even then the file is big enough.
-2. SPDK is modular framework and contains a lot of optional modules which can but don’t have to be included. Depending on which modules are used, the right header files must be used for generating rust bindings and the right libraries must be used for linking. The question is how to master this complexity without having hard coded list of headers and libs in a build script.
-3. SPDK is very much optimised for the cpu it was compiled on. This goes much further than just different cpu architectures. Even various x86 64-bit processors are not compatible between each other. It is non-trivial to produce a binary which works on let’s say all x86 64-bit cpus manufactured in last 10 years.
+2. spdk is modular framework and contains a lot of optional modules which can but don’t have to be included. Depending on which modules are used, the right header files must be used for generating rust bindings and the right libraries must be used for linking. The question is how to master this complexity without having hard coded list of headers and libs in a build script.
+3. spdk is very much optimised for the cpu it was compiled on. This goes much further than just different cpu architectures. Even various x86 64-bit processors are not compatible between each other. It is non-trivial to produce a binary which works on let’s say all x86 64-bit cpus manufactured in last 10 years.
 4. Linking spdk libraries together with rust program is troublesome because some spdk libs are not included in the resulting binary. That’s because there is no explicit dependency on some of the libs. The libs are rather plugable modules which if loaded by the dynamic linker (shlib) or present in the binary (static) register themselves with spdk using “constructor” functions which are executed before the main starts. Linker cannot detect such dependencies and therefore ignores the libraries as it thinks they are not needed. However spdk cannot even start without some of such modules. So this is even more fundamental problem than the previous ones.
 
 The purpose of this doc is to suggest a solution for the last problem mentioned above. As for the first three problems we assume that:
@@ -56,7 +57,7 @@ The purpose of this doc is to suggest a solution for the last problem mentioned 
 2. Size of the produced library/binary does not concern us. We expose all modules and functionality which spdk provides even if not used by the application in the end.
 3. The only supported cpu architecture is x86_64 and the cpu must not be too old.
 
-Though there are ways how to address first two problems in rust using “features”, it would require more work for the initial implementation and there is also maintenance burden as spdk libraries and headers get removed or added between SPDK releases. That said it would be a good extension of spdk sys crate later when it gets more mature.
+Though there are ways how to address first two problems in rust using “features”, it would require more work for the initial implementation and there is also maintenance burden as spdk libraries and headers get removed or added between spdk releases. That said it would be a good extension of spdk sys crate later when it gets more mature.
 
 ## Goals
 
@@ -64,7 +65,7 @@ We wish to have a spdk-sys crate which:
 
 1. follows the best practises for sys crates in rust
 2. is a general rust interface to spdk usable by any project making use of spdk
-3. allow using modified SPDK which differs from the upstream
+3. allow using modified spdk which differs from the upstream
 
 ## Best practices
 
@@ -92,28 +93,28 @@ ISA-L:
 
     isal
 
-There is no monolithic libspdk.so and libdpdk.so containing all libraries above. When building SPDK with `--with-shared` configure option, DPDK libs are built as static. This is a bug in SPDK build system and can be easily fixed.
+There is no monolithic libspdk.so and libdpdk.so containing all libraries above. When building spdk with `--with-shared` configure option, DPDK libs are built as static. This is a bug in spdk build system and can be easily fixed.
 
 ## Applying the best practices to SPDK
 
-The most preferred solution would be to build SPDK object archives and link them statically to app. We bang a head against a wall when doing so. Object archives are linked with as-needed or no-whole-archive linker flag in rust and all libs which are not explicitly used by the app are omitted. Since there is no way how to change the default linker behaviour in rust, the only viable
-workaround is to pretend that we use all of the libraries by referencing a symbol from each of them. The problem is that some of the libs have only private symbols and we can’t reference them anyhow without patching them. There is now way how to make that when using vanilla SPDK (from upstream). Unless the rust build system is enhanced to support `-whole-archive` linker option (ticket https://github.com/rust-lang/rust/issues/56306), we have to use shared libraries.
+The most preferred solution would be to build spdk object archives and link them statically to app. We bang a head against a wall when doing so. Object archives are linked with as-needed or no-whole-archive linker flag in rust and all libs which are not explicitly used by the app are omitted. Since there is no way how to change the default linker behaviour in rust, the only viable
+workaround is to pretend that we use all of the libraries by referencing a symbol from each of them. The problem is that some of the libs have only private symbols and we can’t reference them anyhow without patching them. There is now way how to make that when using vanilla spdk (from upstream). Unless the rust build system is enhanced to support `-whole-archive` linker option (ticket https://github.com/rust-lang/rust/issues/56306), we have to use shared libraries.
 
 Shared libraries suffer from the same problem as static libs as rust build system uses `as-needed` linker flag. But there is an elegant workaround for that. If we create one big shared library out of all smaller ones then it will be surely referenced because there will be surely at least one call to the library - if there was none then it would not make sense to require the lib by the app in the first place - and the dynamic lib loader must load it all to the memory in one piece . The only problem is that we must create this fat library (as I will be calling it) ourselves. Good news is that it is super simple. We just need to take all object archives and combine them into a single shlib:
 
 
     cc -shared -o libspdk_fat.so -Wl,--whole-archive *.a -Wl,--no-whole-archive
 
-The result is a suboptimal solution because the shared library must be built and installed to the system prior to building the app and deployed to a target system along with the app. Detecting if libspdk fat lib is installed on the system is cumbersome as we can’t use pkg-config. SPDK in general is missing support for pkg-config ( https://trello.com/c/uBM2PR4c/19-generate-pkg-config-pc-file-during-make-install ). In spite of all drawbacks it is kinda standard rust solution for sys crates and works with upstream spdk with no changes required.
+The result is a suboptimal solution because the shared library must be built and installed to the system prior to building the app and deployed to a target system along with the app. Detecting if libspdk fat lib is installed on the system is cumbersome as we can’t use pkg-config. spdk in general is missing support for pkg-config ( https://trello.com/c/uBM2PR4c/19-generate-pkg-config-pc-file-during-make-install ). In spite of all drawbacks it is kinda standard rust solution for sys crates and works with upstream spdk with no changes required.
 
-## Using spdk sys crate
+## Using the spdk sys crate
 
 High level steps of how to use spdk sys crate:
 
 **Phase 1:**
 
 1. Check out spdk-sys git repository including spdk sources as submodule.
-2. Run a build script which automates steps needed to build SPDK and creates the fat lib.
+2. Run a build script which automates steps needed to build spdk and creates the fat lib.
 3. Install the fat lib to a system location (*as root)*.
 
 **Phase 2:**
@@ -123,9 +124,9 @@ High level steps of how to use spdk sys crate:
 
 The way how the fat shlib is deployed along with the app to a target system is out of scope. In case of a docker image it can be copied from the system where the image is built to a docker image. On other systems it may be delivered in form of a package as it is usually done for other system libraries.
 
-## SPDK with patches
+## spdk with patches
 
-Some projects using SPDK in rust will need to use their own version of SPDK which differs from the upstream. There is probably no better way than to clone spdk-sys repository on github and override spdk git submodule in the repository so that it points to their own version of SPDK. In dependencies section of Cargo.toml file must be used a github URL of the cloned spdk-sys repo.
+Some projects using spdk in rust will need to use their own version of spdk which differs from the upstream. There is probably no better way than to clone spdk-sys repository on github and override spdk git submodule in the repository so that it points to their own version of SPDK. In dependencies section of Cargo.toml file must be used a github URL of the cloned spdk-sys repo.
 
 ## Tests
 

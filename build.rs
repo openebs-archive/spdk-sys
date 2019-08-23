@@ -48,6 +48,7 @@ fn find_spdk_lib(out_path: &PathBuf) -> Result<()> {
         .arg("-o")
         .arg(o_file)
         .arg(c_file)
+        .arg("-L./build")
         .arg("-lspdk_fat")
         .output()
         .expect("Failed to execute cc");
@@ -121,6 +122,13 @@ fn main() {
         .clang_arg("-Ispdk/include")
         .clang_arg("-Ispdk/lib")
         .rustfmt_bindings(true)
+        .whitelist_function("^spdk.*")
+        .whitelist_function("*.aio.*")
+        .whitelist_function("*.iscsi.*")
+        .whitelist_function("*.lvs.*")
+        .whitelist_function("*.lvol.*")
+        .whitelist_var("^SPDK.*")
+        .whitelist_var("^spdk.*")
         .trust_clang_mangling(false)
         .layout_tests(false)
         .derive_default(true)
@@ -139,6 +147,10 @@ fn main() {
         .expect("Couldn't write bindings!");
 
     // spdk lib
+    println!(
+        "cargo:rustc-link-search={}",
+        format!("{}/build", std::env::current_dir().unwrap().display())
+    );
     println!("cargo:rustc-link-lib=spdk_fat");
 
     // OS libs
