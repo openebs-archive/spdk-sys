@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
 
 # This is a script which automates building of spdk fat library containing all
 # spdk, dpdk and optionally the isa-l object files. It would have been nice if
@@ -16,21 +16,10 @@ cd "${BASEDIR}"
 # checkout spdk sources
 [[ -d spdk/.git ]] || git submodule update --init --recursive
 
-# nasm is not recent enough on most main stream distro's so disable
-# it by default, in SPDK however its enabled by default.
-
-WANT_ISAL=0
-
-for i in "$@" ; do
-	if [[ ${i} == "--with-isal" || ${i} == "--with-crypto" ]]; then
-		WANT_ISAL=1
-		break
-	fi
-done
-
 # We need to disable some CPU specific optimization flags because we cannot
 # know which flavour of x86-64 cpu the binary will run on.
 # corei7 with certain cpu flags disabled seems to be a reasonable compromise.
+
 cp defconfig_x86_64-nhm-linuxapp-gcc spdk/dpdk/config/defconfig_x86_64-nhm-linuxapp-gcc
 
 # The current supported CPU extensions we use are:
@@ -58,14 +47,8 @@ cp defconfig_x86_64-nhm-linuxapp-gcc spdk/dpdk/config/defconfig_x86_64-nhm-linux
 # to a CPU instruction, for this one really needs to read the manual
 DISABLED_FLAGS="-mno-movbe -mno-lzcnt -mno-bmi -mno-bmi2"
 
-# we invert the defaults here to reduce upstream divergence
 CONFIGURE_OPTS="--with-dpdk-machine=nhm --with-iscsi-initiator --with-rdma"
-CONFIGURE_OPTS+=" --with-internal-vhost-lib --disable-tests "
-
-if [[ ${WANT_ISAL} == 0 ]]; then
-	echo "disabling ISAL"
-	CONFIGURE_OPTS+=" --without-isal --without-crypto"
-fi
+CONFIGURE_OPTS+=" --with-internal-vhost-lib --disable-tests --without-isal --with-crypto"
 
 (cd spdk; CFLAGS=${DISABLED_FLAGS} DPDK_EXTRA_FLAGS=${DISABLED_FLAGS} ./configure \
 	${CONFIGURE_OPTS} "$@"
@@ -87,8 +70,9 @@ for f in spdk/dpdk/build/lib/librte_*.a; do
 	fi
 done
 
-if [[ ${WANT_ISAL} = 1 ]]; then
-	ARCHIVES="$ARCHIVES spdk/isa-l/.libs/libisal.a spdk/intel-ipsec-mb/libIPSec_MB.a"
+# depending on CI system, this library might not be there which is fine for the crate itself
+if [[ -f spdk/intel-ipsec-mb/libIPSec_MB.a ]]; then
+	ARCHIVES="$ARCHIVES spdk/intel-ipsec-mb/libIPSec_MB.a"
 fi
 
 echo
@@ -102,7 +86,5 @@ cc -shared -o build/libspdk_fat.so \
 	-lc -lrdmacm -laio -libverbs -liscsi -lnuma -ldl -lrt -luuid -lcrypto \
 	-Wl,--whole-archive ${ARCHIVES} -Wl,--no-whole-archive
 
-echo
-echo "If you are manually built this library copy the library to /usr/local/lib."
-echo "If use used the Makefile, it is not needed as during runtime we will look for it within the repo."
-echo
+echo "If you are not using nix, you should either copy the library to your OS search path or"
+echo "set the RUSTFLAGS environment variable manually, or whatever else you want."

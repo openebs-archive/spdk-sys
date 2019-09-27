@@ -1,0 +1,24 @@
+dist: bionic
+language: rust
+sudo: required
+env:
+  - RUSTFLAGS="-C link-args=-Wl,-rpath=build"
+rust:
+  - stable
+  - nightly
+
+cache:
+  cargo: true
+
+before_script:
+  - sudo apt-get update
+  - sudo ./spdk/scripts/pkgdep.sh || true
+
+matrix:
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
+
+script:
+  - ./build.sh
+  - cargo build

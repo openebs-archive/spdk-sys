@@ -1,4 +1,5 @@
 Rust bindings for spdk.
+[![Build Status](https://travis-ci.org/openebs/spdk-sys.svg?branch=v19.07.x-mayastor)](https://travis-ci.org/openebs/spdk-sys)
 
 # Quick start
 
@@ -16,7 +17,7 @@ Rust bindings for spdk.
     ```
 4.  Build monolithic spdk library:
     ```bash
-    ./build.sh --with-isal --with-crypto
+    ./build.sh --enable-debug
     ```
 5.  Install spdk header files (libs are installed too but those are not needed):
     ```bash
