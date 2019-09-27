@@ -49,6 +49,7 @@ fn find_spdk_lib(out_path: &PathBuf) -> Result<()> {
         .arg(o_file)
         .arg(c_file)
         .arg("-L./build")
+        .arg("-lm")
         .arg("-lspdk_fat")
         .output()
         .expect("Failed to execute cc");
