@@ -90,6 +90,7 @@ fn create_wrapper_h(out_path: &PathBuf) -> Result<String> {
     headers.push("#include <iscsi/init_grp.h>".to_owned());
     headers.push("#include <iscsi/portal_grp.h>".to_owned());
     headers.push("#include <iscsi/tgt_node.h>".to_owned());
+    headers.push("#include <nbd/nbd_internal.h>".to_owned());
 
     let h_file = out_path.join("wrapper.h");
     let mut file = File::create(&h_file)?;
