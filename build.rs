@@ -1,9 +1,7 @@
 extern crate bindgen;
 extern crate cc;
-extern crate glob;
 
 use bindgen::callbacks::{MacroParsingBehavior, ParseCallbacks};
-use glob::glob;
 use std::{
     collections::HashSet,
     env,
@@ -67,37 +65,6 @@ fn find_spdk_lib(out_path: &PathBuf) -> Result<()> {
     }
 }
 
-/// Create a wrapper.h file containing includes for all public spdk header
-/// files, which can be used as input for bindgen.
-fn create_wrapper_h(out_path: &PathBuf) -> Result<String> {
-    let mut headers: Vec<String> = glob("spdk/include/spdk/*.h")
-        .expect("wrong glob pattern")
-        .map(|e| {
-            format!(
-                "#include <spdk/{}>",
-                e.unwrap().file_name().unwrap().to_str().unwrap()
-            )
-        })
-        .collect();
-
-    // Private headers which should not be normally used but we need them
-    headers.push("#include <spdk_internal/lvolstore.h>".to_owned());
-    headers.push("#include <bdev/nvme/bdev_nvme.h>".to_owned());
-    headers.push("#include <bdev/malloc/bdev_malloc.h>".to_owned());
-    headers.push("#include <bdev/aio/bdev_aio.h>".to_owned());
-    headers.push("#include <bdev/lvol/vbdev_lvol.h>".to_owned());
-    headers.push("#include <bdev/iscsi/bdev_iscsi.h>".to_owned());
-    headers.push("#include <iscsi/init_grp.h>".to_owned());
-    headers.push("#include <iscsi/portal_grp.h>".to_owned());
-    headers.push("#include <iscsi/tgt_node.h>".to_owned());
-    headers.push("#include <nbd/nbd_internal.h>".to_owned());
-
-    let h_file = out_path.join("wrapper.h");
-    let mut file = File::create(&h_file)?;
-    file.write_all(headers.join("\n").as_bytes())?;
-    Ok(h_file.to_str().unwrap().to_string())
-}
-
 fn main() {
     #![allow(unreachable_code)]
     #[cfg(not(target_arch = "x86_64"))]
@@ -112,16 +79,9 @@ fn main() {
         panic!("{}", err);
     }
 
-    let wrapper_h = match create_wrapper_h(&out_path) {
-        Ok(val) => val,
-        Err(err) => {
-            panic!("Failed to create wrapper file with headers: {}", err)
-        }
-    };
-
     let macros = Arc::new(RwLock::new(HashSet::new()));
     let bindings = bindgen::Builder::default()
-        .header(wrapper_h)
+        .header("wrapper.h")
         // If we did not use private interfaces those would not be needed.
         // All needed headers should be in /usr/local/include.
         .clang_arg("-Ispdk/include")
@@ -140,7 +100,6 @@ fn main() {
         .derive_debug(true)
         .prepend_enum_name(false)
         .generate_inline_functions(true)
-        .ctypes_prefix("libc")
         .parse_callbacks(Box::new(MacroCallback {
             macros: macros.clone(),
         }))
