@@ -69,7 +69,9 @@
 #include <bdev/aio/bdev_aio.h>
 #include <bdev/lvol/vbdev_lvol.h>
 #include <bdev/iscsi/bdev_iscsi.h>
+#include <bdev/crypto/vbdev_crypto.h>
 #include <iscsi/init_grp.h>
 #include <iscsi/portal_grp.h>
 #include <iscsi/tgt_node.h>
 #include <nbd/nbd_internal.h>
+
