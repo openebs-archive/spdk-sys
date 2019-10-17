@@ -90,6 +90,7 @@ fn main() {
         .whitelist_function("^spdk.*")
         .whitelist_function("*.aio.*")
         .whitelist_function("*.iscsi.*")
+        .whitelist_function("*.crypto_disk.*")
         .whitelist_function("*.lvs.*")
         .whitelist_function("*.lvol.*")
         .whitelist_var("^SPDK.*")
