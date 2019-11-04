@@ -86,6 +86,7 @@ fn main() {
         // All needed headers should be in /usr/local/include.
         .clang_arg("-Ispdk/include")
         .clang_arg("-Ispdk/lib")
+        .clang_arg("-Ispdk/module")
         .rustfmt_bindings(true)
         .whitelist_function("^spdk.*")
         .whitelist_function("*.aio.*")
@@ -93,6 +94,7 @@ fn main() {
         .whitelist_function("*.crypto_disk.*")
         .whitelist_function("*.lvs.*")
         .whitelist_function("*.lvol.*")
+        .whitelist_var("^NVMF.*")
         .whitelist_var("^SPDK.*")
         .whitelist_var("^spdk.*")
         .trust_clang_mangling(false)
