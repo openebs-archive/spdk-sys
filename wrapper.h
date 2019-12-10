@@ -1,3 +1,13 @@
+#include <bdev/aio/bdev_aio.h>
+#include <bdev/crypto/vbdev_crypto.h>
+#include <bdev/iscsi/bdev_iscsi.h>
+#include <bdev/lvol/vbdev_lvol.h>
+#include <bdev/malloc/bdev_malloc.h>
+#include <bdev/nvme/bdev_nvme.h>
+#include <iscsi/init_grp.h>
+#include <iscsi/portal_grp.h>
+#include <iscsi/tgt_node.h>
+#include <nbd/nbd_internal.h>
 #include <spdk/assert.h>
 #include <spdk/barrier.h>
 #include <spdk/base64.h>
@@ -64,14 +74,9 @@
 #include <spdk/vhost.h>
 #include <spdk/vmd.h>
 #include <spdk_internal/lvolstore.h>
-#include <bdev/nvme/bdev_nvme.h>
-#include <bdev/malloc/bdev_malloc.h>
-#include <bdev/aio/bdev_aio.h>
-#include <bdev/lvol/vbdev_lvol.h>
-#include <bdev/iscsi/bdev_iscsi.h>
-#include <bdev/crypto/vbdev_crypto.h>
-#include <iscsi/init_grp.h>
-#include <iscsi/portal_grp.h>
-#include <iscsi/tgt_node.h>
-#include <nbd/nbd_internal.h>
 
+typedef void maya_logger(int level, const char *file, const int line,
+    const char *func, const char *buf, const int len);
+
+// pointer is set from within rust to point to our logging trampoline
+maya_logger *logfn = NULL;
