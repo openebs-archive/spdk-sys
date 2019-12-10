@@ -65,6 +65,15 @@ fn find_spdk_lib(out_path: &PathBuf) -> Result<()> {
     }
 }
 
+fn build_wrapper() {
+    cc::Build::new()
+        .file("logwrapper.c")
+        .flag("-Ispdk/include")
+        .flag("-Ispdk/lib")
+        .flag("-Ispdk/module")
+        .compile("logwrapper");
+}
+
 fn main() {
     #![allow(unreachable_code)]
     #[cfg(not(target_arch = "x86_64"))]
@@ -78,6 +87,8 @@ fn main() {
     if let Err(err) = find_spdk_lib(&out_path) {
         panic!("{}", err);
     }
+
+    build_wrapper();
 
     let macros = Arc::new(RwLock::new(HashSet::new()));
     let bindings = bindgen::Builder::default()
@@ -94,6 +105,7 @@ fn main() {
         .whitelist_function("*.crypto_disk.*")
         .whitelist_function("*.lvs.*")
         .whitelist_function("*.lvol.*")
+        .blacklist_type("^longfunc")
         .whitelist_var("^NVMF.*")
         .whitelist_var("^SPDK.*")
         .whitelist_var("^spdk.*")
@@ -135,4 +147,6 @@ fn main() {
     println!("cargo:rustc-link-lib=crypto");
 
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=wrapper.h");
+    println!("cargo:rerun-if-changed=logwrapper.c");
 }
