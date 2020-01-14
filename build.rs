@@ -116,7 +116,7 @@ fn main() {
         .prepend_enum_name(false)
         .generate_inline_functions(true)
         .parse_callbacks(Box::new(MacroCallback {
-            macros: macros.clone(),
+            macros
         }))
         .generate()
         .expect("Unable to generate bindings");
