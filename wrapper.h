@@ -4,6 +4,7 @@
 #include <bdev/lvol/vbdev_lvol.h>
 #include <bdev/malloc/bdev_malloc.h>
 #include <bdev/nvme/bdev_nvme.h>
+#include <bdev/uring/bdev_uring.h>
 #include <iscsi/init_grp.h>
 #include <iscsi/portal_grp.h>
 #include <iscsi/tgt_node.h>

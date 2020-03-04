@@ -11,23 +11,27 @@ Rust bindings for spdk.
     ```bash
     sudo spdk/scripts/pkgdep.sh
     ```
-3.  `nasm` is an optional dependency which must be installed if you want to make use of crypto and ISA-L:
+3.  Install liburing (or install a distribution package if available):
+   ```bash
+   ./build-ubring.sh
+   ```
+4.  `nasm` is an optional dependency which must be installed if you want to make use of crypto and ISA-L:
     ```bash
     sudo apt-get install nasm
     ```
-4.  Build monolithic spdk library:
+5.  Build monolithic spdk library:
     ```bash
     ./build.sh --enable-debug
     ```
-5.  Install spdk header files (libs are installed too but those are not needed):
+6.  Install spdk header files (libs are installed too but those are not needed):
     ```bash
     cd spdk && make install
     ```
-5.  Copy the library to a place where it can be found by the linker:
+7.  Copy the library to a place where it can be found by the linker:
     ```bash
     sudo cp build/libspdk_fat.so /usr/local/lib/
     ```
-6.  Put spdk-sys crate to dependencies in Cargo.toml of your project and start using it.
+8.  Put spdk-sys crate to dependencies in Cargo.toml of your project and start using it.
 
 # build.sh
 

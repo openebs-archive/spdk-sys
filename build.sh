@@ -47,7 +47,7 @@ cp defconfig_x86_64-nhm-linuxapp-gcc spdk/dpdk/config/defconfig_x86_64-nhm-linux
 # to a CPU instruction, for this one really needs to read the manual
 DISABLED_FLAGS="-mno-movbe -mno-lzcnt -mno-bmi -mno-bmi2"
 
-CONFIGURE_OPTS="--with-dpdk-machine=nhm --with-iscsi-initiator --with-rdma"
+CONFIGURE_OPTS="--with-dpdk-machine=nhm --with-iscsi-initiator --with-rdma --with-uring"
 CONFIGURE_OPTS+=" --with-internal-vhost-lib --disable-tests --without-isal --with-crypto"
 
 (cd spdk; CFLAGS=${DISABLED_FLAGS} DPDK_EXTRA_FLAGS=${DISABLED_FLAGS} ./configure \
@@ -83,7 +83,7 @@ done
 
 [[ -d build ]] || mkdir build
 cc -shared -o build/libspdk_fat.so \
-	-lc -lrdmacm -laio -libverbs -liscsi -lnuma -ldl -lrt -luuid -lcrypto \
+	-lc -lrdmacm -laio -libverbs -liscsi -lnuma -ldl -lrt -luuid -lcrypto -luring \
 	-Wl,--whole-archive ${ARCHIVES} -Wl,--no-whole-archive
 
 echo "If you are not using nix, you should either copy the library to your OS search path or"

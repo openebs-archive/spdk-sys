@@ -105,6 +105,7 @@ fn main() {
         .whitelist_function("*.crypto_disk.*")
         .whitelist_function("*.lvs.*")
         .whitelist_function("*.lvol.*")
+        .whitelist_function("*.uring.*")
         .blacklist_type("^longfunc")
         .whitelist_var("^NVMF.*")
         .whitelist_var("^SPDK.*")
@@ -145,6 +146,7 @@ fn main() {
     println!("cargo:rustc-link-lib=rt");
     println!("cargo:rustc-link-lib=uuid");
     println!("cargo:rustc-link-lib=crypto");
+    println!("cargo:rustc-link-lib=uring");
 
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=wrapper.h");
