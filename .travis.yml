@@ -13,6 +13,7 @@ cache:
 before_script:
   - sudo apt-get update
   - sudo ./spdk/scripts/pkgdep.sh || true
+  - ./build-liburing.sh
 
 matrix:
   allow_failures:
